@@ -38,3 +38,17 @@ def test_valid_request_fetches_and_prepares_the_column(
         240000.0,
     ]
     assert calls == [("housing", "https://data.example.com", "secret")]
+
+
+def test_column_can_be_requested_minmax_scaled(
+    housing_csv: str, settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        dataset, "fetch_csv", lambda name, *, base_url, token: housing_csv
+    )
+    assert dataset.handle_prepare("housing", "sqft", settings, scaling="minmax") == [
+        0.0,
+        0.5,
+        1.0,
+        0.25,
+    ]

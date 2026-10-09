@@ -1,12 +1,12 @@
-"""Column processing. Today it reads a numeric column and returns the
-values unchanged.
+"""Column processing. Reads a numeric column and can min-max scale it into
+the range [0, 1] while keeping the original values available.
 
-FEATURE TASK (for the Explore -> Plan -> Code -> Commit exercise):
-Add min-max scaling here. Before training, numeric features should be
-scaled into the range [0, 1], so a feature with a large range (square
-footage) does not drown out one with a small range (bedrooms).
+This is the completed result of the Explore -> Plan -> Code -> Commit
+exercise. The feature added here is min-max scaling, so a feature with a
+large range (square footage) does not drown out one with a small range
+(bedrooms).
 
-Success criteria:
+Success criteria (all met):
   - prepare_column() can return min-max scaled values in [0, 1].
   - The original values are still available.
   - pytest passes (tests/ is the source of truth).
@@ -15,15 +15,25 @@ Success criteria:
 import csv
 import io
 import math
+from dataclasses import dataclass
 from typing import Literal, get_args
 
-Scaling = Literal["none", "minmax"]  # minmax not implemented yet
+Scaling = Literal["none", "minmax"]
 
 SUPPORTED_SCALINGS: tuple[str, ...] = get_args(Scaling)
 
 MISSING_MARKERS = frozenset({"", "na", "n/a", "nan", "null"})
 
 Column = list[float | None]
+
+
+@dataclass(frozen=True)
+class PreparedColumn:
+    """The original column values alongside their prepared copy."""
+
+    original: tuple[float | None, ...]
+    output: tuple[float | None, ...]
+    scaling: Scaling
 
 
 def read_column(csv_text: str, column: str) -> list[str]:
@@ -52,11 +62,39 @@ def parse_numeric(cells: list[str]) -> Column:
     return values
 
 
+def minmax_scale(values: Column) -> Column:
+    """Scale ``values`` into [0, 1]: the minimum maps to 0 and the maximum to 1.
+
+    Missing values stay ``None`` in the same positions and are ignored when
+    finding the minimum and maximum. A constant column has no range to scale
+    by, so every present value maps to 0.0 instead of dividing by zero.
+    """
+    present = [value for value in values if value is not None]
+    if not present:
+        return list(values)
+    low, high = min(present), max(present)
+    span = high - low
+    if span == 0:
+        return [None if value is None else 0.0 for value in values]
+    return [None if value is None else (value - low) / span for value in values]
+
+
 def prepare_column(values: Column, *, scaling: Scaling = "none") -> Column:
-    """Return ``values`` scaled with ``scaling``. Missing values stay ``None``."""
+    """Return a new list of ``values`` scaled with ``scaling``.
+
+    Missing values stay ``None``, and ``values`` itself is never modified.
+    """
     if scaling not in SUPPORTED_SCALINGS:
         raise ValueError(f"Unsupported scaling: {scaling!r}")
     if scaling == "minmax":
-        raise NotImplementedError("Min-max scaling not implemented yet")
-    # no scaling today
+        return minmax_scale(values)
+    # no scaling
     return list(values)
+
+
+def prepare_column_keeping_original(
+    values: Column, *, scaling: Scaling = "none"
+) -> PreparedColumn:
+    """Prepare ``values`` and return them together with the untouched original."""
+    output = prepare_column(values, scaling=scaling)
+    return PreparedColumn(original=tuple(values), output=tuple(output), scaling=scaling)

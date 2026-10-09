@@ -1,5 +1,9 @@
 # Explore, Plan, Code, Commit: A Python Workflow Project
 
+> **You are on the `solution/minmax-scaling` branch.** It contains the finished min-max scaling feature, so the
+> "starting state" notes below describe `main`, not this branch. On this branch every test passes.
+> See [`SOLUTION.md`](SOLUTION.md) for what changed and why.
+
 A small, hands-on Python project for practicing the four-step loop that keeps AI-assisted coding with Claude Code reliable: **Explore, Plan, Code, Commit**. In about 15 minutes you take one real feature, adding min-max feature scaling to an ML data-preparation pipeline, through all four steps, and you practice course-correcting early, while it is cheapest.
 
 It is written for early-career software and AI/ML engineers. The code is deliberately small, but it is organized the way a real Python service is: a `src/` package layout, type hints checked by mypy, linting with Ruff, and a pytest suite that acts as the source of truth.
