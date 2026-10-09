@@ -8,15 +8,21 @@ Once the plan looks right, you approve it and Claude works through the steps. Cl
 
 Three things make this phase smoother, and all of them are already set up in this project:
 
-- **Success criteria.** The plan should state what "correct" looks like. Here it is concrete: the pipeline returns values in `[0, 1]`, missing values stay `None`, the original values are preserved, and the tests pass.
+- **Success criteria.** The plan should state what "correct" looks like. Here it is concrete: the pipeline returns values in `[0, 1]`, missing values stay `None`, callers can get the original values alongside the scaled ones, and the tests pass.
 - **Tools that let Claude check its own work.** `pytest`, `ruff`, and `mypy` give fast, objective feedback, so there is less back-and-forth with you.
 - **A test suite as the source of truth.** `tests/test_feature_pipeline.py` defines the feature, so Claude troubleshoots against real feedback instead of guessing. Make sure tests are reliable before you trust them, to avoid false positives.
 
 ## Steps
 
-1. When the plan looks right, **Approve** it. Claude begins working through the steps. You can let it auto-accept file edits or confirm each one.
+1. Before approving, create a branch for your work, so `main` stays as the starting point. You can run a shell command from inside Claude Code by starting it with `!`, or use a second terminal:
 
-2. After the change, run the checks:
+   ```
+   ! git switch -c minmax-scaling
+   ```
+
+2. When the plan looks right, **Approve** it. Claude begins working through the steps. You can let it auto-accept file edits or confirm each one.
+
+3. After the change, run the checks:
 
    ```bash
    pytest
@@ -25,11 +31,11 @@ Three things make this phase smoother, and all of them are already set up in thi
    mypy
    ```
 
-3. Read the results. If a test fails, let Claude troubleshoot against the failing assertion rather than guessing. The failing test tells Claude precisely what "correct" means.
+4. Read the results. If a test fails, let Claude troubleshoot against the failing assertion rather than guessing. The failing test tells Claude precisely what "correct" means.
 
-4. If Claude keeps running into the same issue, ask it to save the solution to `CLAUDE.md`, so it does not rediscover the fix next time.
+5. If Claude keeps running into the same issue, ask it to save the solution to `CLAUDE.md`, so it does not rediscover the fix next time.
 
-5. Stop when every check passes and you have reviewed the change yourself. You will commit in Exercise 3.
+6. Stop when every check passes and you have reviewed the change yourself. You will commit in Exercise 3.
 
 ## What to observe
 
@@ -37,6 +43,8 @@ Three things make this phase smoother, and all of them are already set up in thi
 - `test_minmax_scales_values_into_the_unit_range` is written to fail until the feature exists. Watch it move from failing to passing as the implementation lands.
 - A test that fails for the right reason is useful. It is the signal that guides the implementation.
 - If the plan included your revision, Claude also adds tests for a constant column (every value the same, so `max - min` is zero) and for keeping the original values. Without that test, a naive formula raises `ZeroDivisionError` on real data.
+- A constant column has no single right answer. Mapping it to `0.0`, mapping it to `0.5`, or raising a clear error are all defensible, as long as the plan states the choice and a test pins it down. The reference solution uses `0.0`, the same as scikit-learn's `MinMaxScaler`.
+- Claude may tidy up the `FEATURE TASK` note in the module docstring once the feature works. That is expected: it is a teaching marker, and your branch no longer needs it.
 
 ## Look at the code
 

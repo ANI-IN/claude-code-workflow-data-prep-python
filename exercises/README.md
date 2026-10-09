@@ -18,10 +18,9 @@ Most people jump straight to "write the code," which means more correcting later
 ## How to use these exercises
 
 1. Read the root [`README.md`](../README.md) first and complete the setup, so that `pytest` runs inside your virtual environment.
-2. Start Claude Code from the project root:
+2. Start Claude Code from the project root, with your virtual environment active:
 
    ```bash
-   cd claude-code-workflow-data-prep-python
    claude
    ```
 
@@ -53,3 +52,5 @@ The project ships intentionally incomplete. Min-max scaling is not built yet, an
 | Tests pass but the result is wrong | The tests are not a reliable source of truth yet. Tighten them first, then run them again. |
 | The reviewer repeats the main agent's blind spots | Confirm it is a separate subagent with read-only tools, not the same thread reviewing itself. |
 | `ModuleNotFoundError: data_prep` | Activate the virtual environment and run `pip install -e ".[dev]"` from the project root. |
+| `requires a different Python` during `pip install` | The virtual environment uses Python older than 3.10. Delete `.venv` and recreate it with a newer interpreter, for example `python3.12 -m venv .venv`. |
+| `git push` is rejected | You cloned a repository you cannot push to. Commit locally, or fork the repository on GitHub first if you want to push your work. |

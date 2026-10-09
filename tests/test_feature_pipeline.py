@@ -24,7 +24,7 @@ def test_parse_numeric_turns_missing_cells_into_none() -> None:
     assert parse_numeric(cells) == [3.0, 2.5, None, None, None]
 
 
-@pytest.mark.parametrize("cell", ["three", "1,000", "inf", "nan1"])
+@pytest.mark.parametrize("cell", ["three", "1,000", "1_000", "inf", "nan1"])
 def test_parse_numeric_rejects_bad_cells(cell: str) -> None:
     with pytest.raises(ValueError, match="number"):
         parse_numeric([cell])

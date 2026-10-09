@@ -18,4 +18,6 @@ def fetch_csv(dataset: str, *, base_url: str, token: str) -> str:
     request.add_unredirected_header("Authorization", f"Bearer {token}")
     with urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:  # noqa: S310
         body: bytes = response.read()
-    return body.decode("utf-8")
+    # utf-8-sig drops the byte-order mark that spreadsheet exports often add,
+    # which would otherwise end up glued to the first column name.
+    return body.decode("utf-8-sig")

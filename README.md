@@ -26,7 +26,7 @@ The feature used to teach the loop is min-max scaling in the feature pipeline. Y
 - `tests/test_feature_pipeline.py::test_minmax_scales_values_into_the_unit_range` is written to fail until the feature is built.
 - The project has no runtime dependencies. Whether the feature needs one, such as NumPy or scikit-learn, is a question for the Explore and Plan step.
 
-So on `main`, `pytest` reports **one expected failure**. That failure is the target for the Code step.
+So on `main`, `pytest` reports **one intentionally failing test**. That failure is the target for the Code step.
 
 ## 3. Branches
 
@@ -37,7 +37,7 @@ So on `main`, `pytest` reports **one expected failure**. That failure is the tar
 
 ## 4. Prerequisites
 
-- Python 3.10 or newer.
+- Python 3.10 or newer. Check with `python3 --version`. On some systems, including macOS, `python3` can be older than 3.10. If so, install a newer Python and create the virtual environment with it by name, for example `python3.12 -m venv .venv`.
 - Git.
 - [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) installed, so that `claude` is available in your terminal.
 
@@ -64,7 +64,7 @@ pip install -e ".[dev]"
 | Check formatting | `ruff format --check .` |
 | Type check | `mypy` |
 
-On `main`, `pytest` should show 20 passing tests and 1 expected failure (the min-max test). Ruff and mypy should pass cleanly.
+On `main`, `pytest` should end with `1 failed, 22 passed`. The one failure is the min-max test, and it is intentional, so pytest still prints `FAILED` and exits with a non-zero code until you build the feature. Ruff and mypy should pass cleanly.
 
 ## 7. Project Structure
 

@@ -13,7 +13,7 @@ from data_prep.config import Settings
 def test_invalid_dataset_name_is_rejected(
     name: str, settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    def fail_if_called(dataset: str, *, base_url: str, token: str) -> str:
+    def fail_if_called(name: str, *, base_url: str, token: str) -> str:
         raise AssertionError("the store must not be contacted for an invalid name")
 
     monkeypatch.setattr(dataset, "fetch_csv", fail_if_called)

@@ -8,13 +8,15 @@ footage) does not drown out one with a small range (bedrooms).
 
 Success criteria:
   - prepare_column() can return min-max scaled values in [0, 1].
-  - The original values are still available.
+  - The original values are still available: callers can get the
+    original and the scaled values together.
   - pytest passes (tests/ is the source of truth).
 """
 
 import csv
 import io
 import math
+from collections.abc import Sequence
 from typing import Literal, get_args
 
 Scaling = Literal["none", "minmax"]  # minmax not implemented yet
@@ -34,7 +36,7 @@ def read_column(csv_text: str, column: str) -> list[str]:
     return [row[column] or "" for row in reader]
 
 
-def parse_numeric(cells: list[str]) -> Column:
+def parse_numeric(cells: Sequence[str]) -> Column:
     """Convert raw cells to floats. Missing cells become ``None``."""
     values: Column = []
     for cell in cells:
@@ -42,6 +44,9 @@ def parse_numeric(cells: list[str]) -> Column:
         if text.lower() in MISSING_MARKERS:
             values.append(None)
             continue
+        # float() accepts "1_000", but a separator in a data cell is bad input.
+        if "_" in text:
+            raise ValueError(f"Not a number: {cell!r}")
         try:
             value = float(text)
         except ValueError:
@@ -52,7 +57,9 @@ def parse_numeric(cells: list[str]) -> Column:
     return values
 
 
-def prepare_column(values: Column, *, scaling: Scaling = "none") -> Column:
+def prepare_column(
+    values: Sequence[float | None], *, scaling: Scaling = "none"
+) -> Column:
     """Return ``values`` scaled with ``scaling``. Missing values stay ``None``."""
     if scaling not in SUPPORTED_SCALINGS:
         raise ValueError(f"Unsupported scaling: {scaling!r}")
