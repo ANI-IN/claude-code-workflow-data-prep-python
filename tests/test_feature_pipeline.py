@@ -24,7 +24,7 @@ def test_parse_numeric_turns_missing_cells_into_none() -> None:
     assert parse_numeric(cells) == [3.0, 2.5, None, None, None]
 
 
-@pytest.mark.parametrize("cell", ["three", "1,000", "inf", "nan1"])
+@pytest.mark.parametrize("cell", ["three", "1,000", "1_000", "inf", "nan1"])
 def test_parse_numeric_rejects_bad_cells(cell: str) -> None:
     with pytest.raises(ValueError, match="number"):
         parse_numeric([cell])
@@ -76,6 +76,11 @@ def test_minmax_on_a_constant_column_returns_zeros() -> None:
         None,
         0.0,
     ]
+
+
+def test_minmax_survives_a_range_wider_than_the_float_limit() -> None:
+    # 1e308 - (-1e308) overflows to infinity; a naive formula returns NaN here.
+    assert prepare_column([-1e308, 0.0, 1e308], scaling="minmax") == [0.0, 0.5, 1.0]
 
 
 @pytest.mark.parametrize("values", [[], [None, None]])

@@ -13,7 +13,7 @@ You can also run the Explore subagent outside Plan Mode when you only want a gen
 1. Activate your virtual environment, then start Claude Code from the project root:
 
    ```bash
-   source .venv/bin/activate
+   source .venv/bin/activate        # Windows: .venv\Scripts\activate
    claude
    ```
 

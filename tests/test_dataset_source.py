@@ -33,6 +33,21 @@ def test_fetch_csv_uses_tls_and_bearer_token(
     assert captured["timeout"] == dataset_source.REQUEST_TIMEOUT_SECONDS
 
 
+def test_byte_order_mark_is_removed(
+    housing_csv: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Spreadsheet tools often save CSV files with a UTF-8 byte-order mark.
+    body = housing_csv.encode("utf-8-sig")
+    monkeypatch.setattr(
+        dataset_source, "urlopen", lambda request, timeout: io.BytesIO(body)
+    )
+    text = dataset_source.fetch_csv(
+        "housing", base_url="https://data.example.com", token="secret"
+    )
+    assert text == housing_csv
+    assert text.startswith("sqft,")
+
+
 def test_plain_http_store_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     def fail_if_called(request: Request, timeout: float) -> io.BytesIO:
         raise AssertionError("an insecure store must not be contacted")

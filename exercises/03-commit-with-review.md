@@ -16,7 +16,7 @@ The reviewer for this project is already defined in `.claude/agents/code-reviewe
    Use the code-reviewer subagent to review the min-max scaling changes before I commit.
    ```
 
-2. Read the structured assessment the reviewer returns. It covers security, correctness, conventions, and whether the change is ready to merge. Address anything it flags, then run `pytest`, `ruff check .`, and `mypy` again.
+2. Read the structured assessment the reviewer returns. It covers security, correctness, conventions, and whether the change is ready to merge. Address anything it flags, then run `pytest`, `ruff check .`, `ruff format --check .`, and `mypy` again.
 
 3. When the review is clean, ask Claude to write the commit message in your style:
 
@@ -24,19 +24,20 @@ The reviewer for this project is already defined in `.claude/agents/code-reviewe
    Write a commit message for these changes in our conventional-commits style.
    ```
 
-4. Review the message, commit, and you are ready to start the next feature. Rinse and repeat.
+4. Review the message and commit it on your branch. Then you are ready to start the next feature. Rinse and repeat. You cloned this repository, so you cannot push to it. Fork it on GitHub first if you want to push your work.
 
 5. Optional: compare your result with the reference solution:
 
    ```bash
-   git diff main origin/solution/minmax-scaling
+   git diff origin/solution/minmax-scaling       # your branch versus the reference
+   git diff main origin/solution/minmax-scaling  # what the reference changed
    ```
 
 ## What to observe
 
 - The reviewer reads the changed files and returns a report. Confirm it runs as a separate subagent with read-only tools, not the same thread reviewing its own work.
 - A fresh context is what catches blind spots. If the same thread reviewed itself, it would tend to repeat its own assumptions.
-- Typical findings for this feature include division by zero on a constant column, a column where every value is missing, a new dependency added without a clear reason, and scaling that changes the caller's list in place instead of returning a new one.
+- Typical findings for this feature include division by zero on a constant column, a column where every value is missing, values so large that `max - min` overflows to infinity and the output turns into `NaN`, a new dependency added without a clear reason, and scaling that changes the caller's list in place instead of returning a new one.
 - The commit message reflects your conventions, because you asked for your style rather than a generic message.
 
 ## Look at the code

@@ -15,8 +15,9 @@ git diff main origin/solution/minmax-scaling
 - `prepare_column(values, scaling="minmax")` now returns scaled values instead of raising `NotImplementedError`.
 - `minmax_scale()` maps the smallest value to `0.0`, the largest to `1.0`, and everything else in between, using `(value - min) / (max - min)`.
 - Missing values stay `None` in the same positions, and they are ignored when finding the minimum and maximum. This follows the `CLAUDE.md` rule: never silently drop or invent missing values.
-- A constant column, where every value is the same, has a range of zero. Instead of raising `ZeroDivisionError`, every present value maps to `0.0`. This is the case the plan revision asked to test.
+- A constant column, where every value is the same, has a range of zero. Instead of raising `ZeroDivisionError`, every present value maps to `0.0`, the same choice scikit-learn's `MinMaxScaler` makes. This is the case the plan revision asked to test. Mapping to `0.5` or raising a clear error would also be fine if the plan documents it.
 - A column that is empty or entirely missing comes back unchanged.
+- If the values are so far apart that `max - min` overflows to infinity (values near the float limit of about `1e308`), the values are halved before scaling. Halving is exact, so the output stays in `[0, 1]` instead of turning into `NaN`. The reviewer subagent tends to catch this one.
 - `prepare_column()` always returns a new list, so the caller's data is never modified.
 - `prepare_column_keeping_original()` returns a frozen `PreparedColumn` dataclass holding both the original values and the prepared output, stored as tuples so neither can be changed afterward.
 - The no-scaling path behaves exactly as before.
@@ -31,13 +32,13 @@ git diff main origin/solution/minmax-scaling
 
 **`tests/`**
 
-- New tests cover missing values, negative values, a real dataset column, a constant column, empty and all-missing columns, not modifying the input, keeping the original values, and requesting scaling through the API.
+- New tests cover missing values, negative values, a real dataset column, a constant column, empty and all-missing columns, a range that overflows the float limit, not modifying the input, keeping the original values, and requesting scaling through the API.
 
 ## Success criteria met
 
 - `prepare_column()` can return min-max scaled values in `[0, 1]`.
 - The original values are still available.
-- `pytest` passes: 31 tests, including the min-max test that fails on `main`.
+- `pytest` passes: 34 tests, including the min-max test that fails on `main`.
 - `ruff check .`, `ruff format --check .`, and `mypy` pass with no issues.
 
 ## How to check it

@@ -8,13 +8,15 @@ large range (square footage) does not drown out one with a small range
 
 Success criteria (all met):
   - prepare_column() can return min-max scaled values in [0, 1].
-  - The original values are still available.
+  - The original values are still available: callers can get the
+    original and the scaled values together.
   - pytest passes (tests/ is the source of truth).
 """
 
 import csv
 import io
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Literal, get_args
 
@@ -44,7 +46,7 @@ def read_column(csv_text: str, column: str) -> list[str]:
     return [row[column] or "" for row in reader]
 
 
-def parse_numeric(cells: list[str]) -> Column:
+def parse_numeric(cells: Sequence[str]) -> Column:
     """Convert raw cells to floats. Missing cells become ``None``."""
     values: Column = []
     for cell in cells:
@@ -52,6 +54,9 @@ def parse_numeric(cells: list[str]) -> Column:
         if text.lower() in MISSING_MARKERS:
             values.append(None)
             continue
+        # float() accepts "1_000", but a separator in a data cell is bad input.
+        if "_" in text:
+            raise ValueError(f"Not a number: {cell!r}")
         try:
             value = float(text)
         except ValueError:
@@ -62,7 +67,7 @@ def parse_numeric(cells: list[str]) -> Column:
     return values
 
 
-def minmax_scale(values: Column) -> Column:
+def minmax_scale(values: Sequence[float | None]) -> Column:
     """Scale ``values`` into [0, 1]: the minimum maps to 0 and the maximum to 1.
 
     Missing values stay ``None`` in the same positions and are ignored when
@@ -76,10 +81,20 @@ def minmax_scale(values: Column) -> Column:
     span = high - low
     if span == 0:
         return [None if value is None else 0.0 for value in values]
+    if not math.isfinite(span):
+        # max - min overflowed (values near the float limit). Halving is exact,
+        # so scale the halved values instead and keep the output in [0, 1].
+        half_low, half_span = low / 2, high / 2 - low / 2
+        return [
+            None if value is None else (value / 2 - half_low) / half_span
+            for value in values
+        ]
     return [None if value is None else (value - low) / span for value in values]
 
 
-def prepare_column(values: Column, *, scaling: Scaling = "none") -> Column:
+def prepare_column(
+    values: Sequence[float | None], *, scaling: Scaling = "none"
+) -> Column:
     """Return a new list of ``values`` scaled with ``scaling``.
 
     Missing values stay ``None``, and ``values`` itself is never modified.
@@ -93,7 +108,7 @@ def prepare_column(values: Column, *, scaling: Scaling = "none") -> Column:
 
 
 def prepare_column_keeping_original(
-    values: Column, *, scaling: Scaling = "none"
+    values: Sequence[float | None], *, scaling: Scaling = "none"
 ) -> PreparedColumn:
     """Prepare ``values`` and return them together with the untouched original."""
     output = prepare_column(values, scaling=scaling)
